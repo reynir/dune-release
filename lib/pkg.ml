@@ -173,6 +173,9 @@ let infer_github_repo pkg =
       match Stdext.Option.O.(dev_repo >>= Github_repo.from_uri) with
       | Some gh_repo -> Ok gh_repo
       | None ->
+        match Stdext.Option.O.(Sys.getenv_opt "DUNERELEASE_GITHUB_REPO" >>= Github_repo.from_uri) with
+        | Some gh_repo -> Ok gh_repo
+        | None ->
           R.error_msg
             "Github development repository URL could not be inferred from opam \
              files.")
