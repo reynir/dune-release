@@ -109,11 +109,18 @@ let publish_in_git_branch ~dry_run ~remote ~branch ~name ~version ~docdir ~dir
         log_publish_result "Published documentation for" (name, version) dir;
         Ok ()
 
+let dev_repo p =
+  Pkg.dev_repo p >>= function
+  | Some r -> Ok r
+  | None ->
+      Pkg.opam p >>= fun opam ->
+      R.error_msgf "The field dev-repo is missing in %a." Fpath.pp opam
+
 let publish_doc ~dry_run ~msg:_ ~docdir ~yes p =
   Pkg.github_doc_owner_repo_and_path p >>= fun (user, repo, dir) ->
   Pkg.name p >>= fun name ->
   Pkg.version p >>= fun version ->
-  let remote = strf "git@@github.com:%s/%s.git" user repo in
+  dev_repo p >>= fun dev_repo ->
   Vcs.get () >>= fun vcs ->
   let force = user <> D.user in
   let create_empty_gh_pages () =
@@ -137,7 +144,7 @@ let publish_doc ~dry_run ~msg:_ ~docdir ~yes p =
     |> R.join
   in
   (match
-     Vcs.run_git_quiet vcs ~dry_run ~force Cmd.(v "fetch" % remote % "gh-pages")
+     Vcs.run_git_quiet vcs ~dry_run ~force Cmd.(v "fetch" % dev_repo % "gh-pages")
    with
   | Ok () -> Ok ()
   | Error _ ->
@@ -153,7 +160,7 @@ let publish_doc ~dry_run ~msg:_ ~docdir ~yes p =
   Vcs.run_git_quiet vcs ~dry_run ~force
     Cmd.(v "branch" % "-f" % "gh-pages" % id)
   >>= fun () ->
-  publish_in_git_branch ~dry_run ~remote ~branch:"gh-pages" ~name ~version
+  publish_in_git_branch ~dry_run ~remote:dev_repo ~branch:"gh-pages" ~name ~version
     ~docdir ~dir ~yes
 
 (* Publish releases *)
@@ -282,13 +289,6 @@ let undraft_pr ~token ~dry_run ~opam_repo:(user, repo) ~pr_id =
   in
   run_with_auth ~dry_run ~default_body curl_t
   >>= Github_v4_api.Pull_request.Response.url
-
-let dev_repo p =
-  Pkg.dev_repo p >>= function
-  | Some r -> Ok r
-  | None ->
-      Pkg.opam p >>= fun opam ->
-      R.error_msgf "The field dev-repo is missing in %a." Fpath.pp opam
 
 let check_tag ~dry_run vcs tag =
   if Vcs.tag_exists ~dry_run vcs tag then Ok ()

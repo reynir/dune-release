@@ -82,11 +82,13 @@ val licenses : t -> (Fpath.t list, R.msg) result
 
 val infer_github_distrib_uri : t -> (string, R.msg) result
 (** [infer_github_distrib_uri p] infers [p]'s Github distribution URI from the
-    homepage and dev-repo fields. *)
+    homepage and dev-repo fields and DUNERELEASE_GITHUB_REPO environment
+    variable. *)
 
 val infer_github_repo : t -> (Github_repo.t, R.msg) result
 (** [infer_github_repo p] infers [p]'s Github remote repository from the
-    homepage and dev-repo fields. *)
+    homepage and dev-repo fields and DUNERELEASE_GITHUB_REPO environment
+    variable. *)
 
 val distrib_file : dry_run:bool -> t -> (Fpath.t, R.msg) result
 (** [distrib_file p] is [p]'s distribution archive. *)

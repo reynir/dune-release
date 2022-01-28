@@ -174,7 +174,7 @@ let infer_github_repo pkg =
       | Some gh_repo -> Ok gh_repo
       | None ->
         match Stdext.Option.O.(Sys.getenv_opt "DUNERELEASE_GITHUB_REPO" >>= Github_repo.from_uri) with
-        | Some gh_repo -> Ok gh_repo
+        | Some gh_repo -> Logs.warn (fun m -> m "using github repo from environment"); Ok gh_repo
         | None ->
           R.error_msg
             "Github development repository URL could not be inferred from opam \
